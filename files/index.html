@@ -1,0 +1,347 @@
+<html>
+	<head>
+		<style>
+			@import url(http://fonts.googleapis.com/css?family=Mystery+Quest);
+			html,body{height:100%;margin:0;}
+			body{
+				overflow-y: hidden;
+				overflow-x: auto;
+			}
+			avitar{background-color: rgba(255, 255, 0, 0.2) !important;}
+			.actor
+			{
+				position: absolute;
+				width:auto;
+			}
+			.actor > span
+			{
+				position: absolute;
+				bottom: 0px;
+			}
+			.actor > span > div
+			{
+				position: relative;
+				bottom: 0px;
+				right: 50%;
+			}
+			.actor-title
+			{
+				margin: 0 auto;
+				text-align: center;
+				
+				font-size: 30px;
+				font-family: 'Mystery Quest', cursive;
+				text-transform: capitalize;
+			}
+			.flip {
+				-moz-transform: scaleX(-1);
+				-o-transform: scaleX(-1);
+				-webkit-transform: scaleX(-1);
+				transform: scaleX(-1);
+				filter: FlipH;
+			}
+		</style>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/files/db.js"></script>
+	</head>
+	<body>
+	</body>
+</html>
+<script>
+	/*
+	(function($, db, undefined){
+		"use strict";
+		var noproto = !({}.__proto__);
+		window.ping = 0;
+		db.proto = function(o){
+			function Entity(){}
+			Entity.prototype = o;
+			Entity = new Entity();
+			if(noproto) Entity.__proto__ = o;
+			Entity._ = new Date().getTime() * window.ping;
+			return Entity;
+		};
+		db.lookup = db.lookup || {};
+		db._changed = db._changed || [];
+		db.changes = [];
+		db.EntityClass = db.EntityClass || {
+				data : {},
+				set: function(data, fromServer){
+					this._on = this._on || {};
+					var difference = false;
+					for(var name in data)
+						if($.type(this.data[name]) !== $.type(data[name]) ||
+							($.type(this.data[name]) === 'string' && this.data[name] !== data[name]) ||
+							this.data[name] != data[name]){
+								if(!difference){
+									this.data = db.proto(this.data);
+									difference = {};
+								}
+								this.data[name] = difference[name] = data[name];
+							}
+					if(difference){
+						this.fire('change', [difference]);
+						if(!fromServer)
+							db._changed.push(difference);
+					}
+				},
+				on: function(type, handler, args){
+					if($.type(handler) === 'function'){
+						this._on = this._on || {};
+						this._on[type] = this._on[type] || [];
+						this._on[type].push(handler);
+						if(args) handler.apply(this, args);
+					}
+				},
+				un: function(type, handler){
+					if($.type(handler) === 'function' && this._on && this._on[type]){
+						var index = $.inArray(this._on[type], handler);
+						if(index != -1){
+							this._on[type].splice(index,1);
+							if(this._on[type].length == 0)
+								delete this._on[type];
+						}
+					}
+				},
+				fire: function(type, args){
+					var entity = this;
+					args = args || [];
+					if(this._on && this._on[type])
+						$.each(this._on[type], function(i, handler){
+							if(handler.apply(entity, args) === 'un')
+								entity.un(type, handler);
+						});
+				}
+			};
+		db.isEntity = function(o){ try{return o instanceof db.EntityClass;}catch(e){}};
+		db.Entity = function(data){
+			if(arguments.length > 1)
+				data = Array.prototype.slice.call(arguments, 0);
+			if($.type(data) === 'array'){
+				$.each(data, function(i, item){
+					data[i] = db.Entity(item);
+				});
+				return data;
+			}
+			if(db.isEntity(data))
+				return data;
+			var id = data;
+			if($.type(data) !== 'string'){
+				data = data || {};
+				id = data._id || data._key || 'r' + (Math.random()+'').replace(/\D/,'');
+			}
+			var entity = db.lookup[id];
+			if(data._key) id = data._key;
+			if(!entity) entity = db.lookup[id];
+			if(!entity) entity = db.proto(db.EntityClass);
+			if($.type(data) !== 'object') data = {};
+			if(entity._id !== id) entity._id = data._id = id;
+			entity.set(data);
+			db.lookup[entity.data._id] = entity;
+			return entity;
+		};
+	
+		db.sync = false;
+		db.synced = null;
+		db.ping = function(){
+			if(db.sync){
+				var data = []; $.each(db._changed, function(k, e){ data.push(e); }); db._changed = {};
+				$.ajax({
+					url: '/db/',
+					contentType: 'application/json',
+					data: JSON.stringify(db.synced? {data: data, updated: '(new Date('+db.synced.getTime()+'))'}: {data: data}),
+					processData: false,
+					dataType: 'json',
+					type: 'POST',
+					success: function(data){
+						if(data){
+							db.synced = parseInt(data.synced.replace(/\D/g,''));
+							if(db.synced == db.synced && db.synced > 0)
+								db.synced = new Date(db.synced);
+							else db.synced = null;
+							
+							if(data.warnings && data.warnings.length > 0)
+								$.each(data.warnings, function(i, warning){
+									console.warn(warning);
+								});
+							if(data.errors && data.errors.length > 0)
+								$.each(data.errors, function(i, error){
+									setTimeout(function(){
+										throw error;
+									}, 0);
+								});
+							
+							if(data.data.length > 0) console.log(data.data);
+							db.Entity(data.data);
+						}
+						setTimeout(function(){ db.ping(); }, 0);
+					},
+					error: function(){
+						var args = arguments;
+						setTimeout(function(){
+							throw args;
+						}, 0);
+						setTimeout(function(){ db.ping(); }, 1000);
+					}
+				});
+			} else setTimeout(function(){ db.ping(); }, 1000);
+		}; db.ping();
+	})(window.jQuery, window.db = window.EntityDatabase = window.EntityDatabase || {});
+	//Image loader:
+	(function($, db){
+		"user strict";
+		if(!db.$offscreen){
+			db.$offscreen =
+				$('<div></div>').css({
+					overflow: 'hidden',
+					position: 'fixed',
+					opacity: 0,
+					height: 1,
+					width: 1,
+					left: -1,
+					top: -1
+				});
+			$(document).ready(function(){ $(document.body).append(db.$offscreen); });
+		}
+		db.Image = function(url, callback){
+			var entity = db.Entity(url),
+				loaded = function(){
+					entity.set({
+						width: entity.$img.width(),
+						height: entity.$img.height(),
+						loaded: true
+					});
+					entity.$img.off('load', loaded);
+					if($.type(callback)==='function')
+						callback.call(entity);
+				};
+			if(entity.$img){
+				setTimeout(loaded, 0);
+			}else{
+				entity.$img = $('<img/>');
+				entity.$img.on('load', loaded);
+				db.$offscreen.append(entity.$img);
+				entity.$img.attr('src', url);
+			}
+			return entity;
+		};
+		var $window = $(window),
+			scale = $window.height() / 1024,
+			win = $('<div></div>')
+				.css({
+					position: 'absolute',
+					top: 0,
+					left: 0
+				}),
+			game = window.$game = $('<div></div>')
+				.css({
+					position: 'absolute',
+					top: 0,
+					left: 0,
+					height: 1024,
+					'overflow-y': 'hidden',
+					'overflow-x': 'auto',
+					'background-image': 'url(/files/night.png)',
+					'background-size': 'auto 1024'
+				}),
+			rescale = function(){
+				game.scale = $window.height()/1024;
+				win.css({
+					'transform': 'scale('+game.scale+')',
+					'-webkit-transform': 'scale('+game.scale+')',
+					'-moz-transform': 'scale('+game.scale+')'
+				});
+				game.css({
+					width: $window.width() / game.scale
+				});
+			};
+		game.scale = scale;
+		$(window).resize(rescale); rescale();
+		win.append(game);
+		$(document.body).append(win);
+		game.click(function(e){
+			if(window.selected)
+				window.selected.set({
+					x: e.clientX / $game.scale,
+					y: ($(window).height() - e.clientY) / $game.scale
+				});
+			//console.log((e.clientX/game.scale)+','+(1024-e.clientY/game.scale));
+		});
+		
+		
+		db.dist = function(p1,p2){
+			var xs = 0;
+			var ys = 0;
+			xs = p2.x - p1.x;
+			xs = xs * xs;
+			ys = p2.y - p1.y;
+			ys = ys * ys;
+			return Math.sqrt( xs + ys );
+		};
+		db.instances = {actor:{}};
+		db.types = {
+			actor: function(entity){
+				console.log(entity);
+				entity = db.Entity(entity);
+				entity = db.instances.actor[entity._id] = db.instances.actor[entity._id] || db.proto(entity);
+				var $element = entity.$element = 
+					$('<div class="actor"><span><div>'+
+						'<div class="actor-title"></div>'+
+						'<img class="actor-avitar"/>'+
+					'</div></span></div>')
+						.appendTo($game)
+						.attr('data-entity', entity._id),
+					$title = entity.$title = $element.find('.actor-title'),
+					$avitar = entity.$avitar = $element.find('.actor-avitar')
+						.css({'max-height': 200});
+				entity.on('change', function(difference){
+					if(!$element || $element != entity.$element || $element.length < 1) return 'un';
+					if(!difference || difference.hasOwnProperty('x') || difference.hasOwnProperty('y') || difference.hasOwnProperty('speed') || difference.hasOwnProperty('flip')){
+						var x = $element.position().left / $game.scale,
+							y = $(window).height() - $element.position().top / $game.scale,
+							speed = entity.data.speed * 1;
+						if(speed != speed) speed = 1;
+						$element.stop().animate({
+							left: entity.data.x,
+							bottom: entity.data.y
+						}, (db.dist({
+							x: x,
+							y: y
+						}, entity.data) / speed), 'linear');
+						
+						var orientation = entity.data.x > x;
+						if(entity.data.flip) orientation = !orientation;
+						if(orientation)
+							$avitar.addClass('flip');
+						else
+							$avitar.removeClass('flip');
+					}
+					if(!difference || difference.hasOwnProperty('title'))
+						$title.text(entity.data.title);
+					if(!difference || difference.hasOwnProperty('src'))
+						$avitar.attr('src', entity.data.src);
+				}, []);
+				return entity;
+			}
+		};
+		db.create = function(entity){
+			entity = db.Entity(entity);
+			if(db.types[entity.data.type]){
+				return db.instances[entity.data.type][entity._id] ||
+					db.types[entity.data.type](entity);
+			}
+			return entity;
+		};
+	})(window.jQuery, window.EntityDatabase);
+	//*
+	window.selected = db.create({
+		_key: 'sw33tieb0t',
+		type: 'actor',
+		speed: 1,
+		x: 300,
+		y: 300,
+		title: 'sw33tieb0t',
+		src: "http://fc07.deviantart.net/fs70/i/2011/106/f/c/sweetie_belle_freaky_long_leg_by_moongazeponies-d3e5o3c.png"
+	});
+	//*/
+</script>

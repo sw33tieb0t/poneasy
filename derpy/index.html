@@ -1,0 +1,241 @@
+
+<html>
+
+	<head>
+
+		<link href='http://fonts.googleapis.com/css?family=Crafty+Girls' rel='stylesheet' type='text/css'>
+
+		<link href='http://fonts.googleapis.com/css?family=Geostar' rel='stylesheet' type='text/css'></link>
+
+		<style>
+
+			html,body{height:100%;margin:0;}
+
+			.mirror{ -moz-transform: scaleX(-1); -o-transform: scaleX(-1); -webkit-transform: scaleX(-1); transform: scaleX(-1); filter: FlipH; }
+
+		</style>
+
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+
+	</head>
+
+	<body><img style="position:absolute;top:0;left:0;width:100%;z-index:-1;" src="background.png"/><p style="font-family: 'Crafty Girls', cursive;padding:25px;">Derpy says: *duh* Click The Screen...</p><p style="position:absolute;bottom:0px;right:0px;font-family: 'Geostar', cursive;">input name: sw33tieb0t</p>
+
+    </body>
+
+	<script>
+
+	function dist(p1,p2){
+
+		var xs = 0;
+
+		var ys = 0;
+
+		xs = p2.x - p1.x;
+
+		xs = xs * xs;
+
+		ys = p2.y - p1.y;
+
+		ys = ys * ys;
+
+		return Math.sqrt( xs + ys );
+
+	}
+
+	function Pony(pony){ return '<div style="position:absolute;top:90px;left:110px;height:200px;"><center><p style="'+"font-family: 'Crafty Girls', cursive;"+'">'+pony.name+'</p></center><img class="mirror" style="height:200px;" src="'+pony.src+'"></div>'; };
+
+	var $derpy = $(Pony({name:'Derpy',src:'derpy.gif'}));
+
+	$(document.body).append($derpy);
+
+	$(document.body).click(function(e){
+
+		if($derpy.position().left>e.pageX){
+
+			$('img',$derpy).addClass('mirror');
+
+		}else{
+
+			$('img',$derpy).removeClass('mirror');
+
+		}
+
+		$derpy.stop().animate({
+
+			top:e.pageY,
+
+			left:e.pageX
+
+		}, dist({x:$derpy.position().left,y:$derpy.position().top},{x:e.pageX,y:e.pageY}) / .15,'linear');
+
+	});
+
+	/*
+
+Math.lerp = function(a,b,t){if(t>1)return b;if(t<0)return a;return a*(1-t)+b*t;}
+
+Math.plerp = function(a,b,t){return{x:Math.lerp(a.x,b.x,t),y:Math.lerp(a.y,b.y,t)};}
+
+var a={x:0.0,y:0.0},
+
+	b={x:100.0,y:100.0};
+
+for(var i=0;i<10;i++){
+
+	console.log(Math.plerp(a,b,i*.1));
+
+}
+
+//*/
+
+	/*
+
+	setInterval(function(){
+
+		document.title = Math.random()+'';
+
+	},10);
+
+	///
+
+		window.Tmp=Tmp={
+
+			get:document.getElementById,
+
+			types:{},
+
+			apply:function(result){
+
+				if(arguments.length > 1)
+
+					for(var i=1; i < arguments.length; i++)
+
+						for(var key in arguments[i])
+
+							if(typeof arguments[i][key] === "object" && result[key])
+
+								result[key] = Tmp.apply(result[key]||{},arguments[i][key]);
+
+							else
+
+								result[key] = arguments[i][key];
+
+				return result;
+
+			},
+
+			extend:function(o){
+
+				function f(){}
+
+				f.parent = o;
+
+				f.prototype = o;
+
+				arguments[0]=new f();
+
+				return Tmp.apply.apply(o,arguments);
+
+			},
+
+			def:function(type,config){
+
+				(config=config||{}).tmp=config.tmp||Array.prototype.splice.call(arguments,2);
+
+				if(typeof config.tmp !== 'string')
+
+					config.tmp=Array.prototype.join.call(config.tmp);
+
+				config.type=type;
+
+				config.data=config.data||{};
+
+				Tmp.types[type]=config;
+
+				config.render=function(data){
+
+					data=config.data=Tmp.apply(config.data||{},data||{});
+
+					var variables=/[^\\]{\w+}/g;
+
+					var match=null;
+
+					while(match=variables.exec(config.tmp)){
+
+						var selector = match[0][0];
+
+						var name = match[0].substring(2,match[0].length-1);
+
+						if(selector==='@'){
+
+						}
+
+						console.log([selector,name]);
+
+					}
+
+				};
+
+				return config;
+
+			}
+
+		};
+
+		Tmp.def('box',
+
+			['<div @dom>',
+
+				'@items',
+
+			'</div>']);
+
+		var G = Tmp.render(document.body,{
+
+			type:'box',
+
+			items:[{
+
+				
+
+			}]
+
+		})
+
+		
+
+		
+
+		test.render({
+
+			data:{
+
+				title:'some title'
+
+			},
+
+			nodes:[{
+
+				
+
+			}],
+
+			on:{
+
+				click:function(){
+
+					
+
+				}
+
+			}
+
+		});
+
+		//*/
+
+	</script>
+
+</html>
+

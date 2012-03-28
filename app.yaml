@@ -1,0 +1,20 @@
+application: poneasy
+version: 2
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /db/.*
+  script: db.controller
+
+- url: /files
+  static_dir: files
+
+- url: /favicon\.ico
+  static_files: favicon.ico
+  upload: favicon\.ico
+
+- url: /
+  static_files: files\index.html
+  upload: files/index\.html
